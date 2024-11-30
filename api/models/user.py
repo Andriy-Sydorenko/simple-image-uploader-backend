@@ -12,9 +12,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True, nullable=False)
 
-    email = Column(String(255), nullable=False, unique=True)
+    email = Column(String(64), nullable=False, unique=True)
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False, index=True)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String(50), nullable=False)
     is_active = Column(Boolean, default=True)
 
     images = relationship("Image", back_populates="user")

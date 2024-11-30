@@ -8,12 +8,19 @@ from api.models import User
 from api.schemas.user import UserRegister
 from api.utils import decode_jwt_token
 from engine import get_db
+from exceptions import UserAlreadyExistsError
 
 
 def create_user(user_data: UserRegister) -> User:
-    user = User(email=str(user_data.email), hashed_password=user_data.password)
-    user.set_password(user_data.password)
     db: Session = next(get_db())
+    query = select(User).filter(User.email == user_data.email)
+    result = db.execute(query)
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise UserAlreadyExistsError("User with this email already exists.")
+
+    user = User(email=str(user_data.email))
+    user.set_password(user_data.password)
     db.add(user)
     db.commit()
     db.refresh(user)

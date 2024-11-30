@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr
 
 
 class UserRegister(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
     def encrypt_password(self):
