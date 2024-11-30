@@ -1,7 +1,6 @@
 from uuid import UUID
 
 import cloudinary.uploader
-from pydantic import ValidationError
 from robyn import Request, Response, Robyn
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -64,7 +63,6 @@ def upload_image(request):
     token = extract_jwt_token_from_request(request.headers)
     user = get_user_by_token(token)
     db: Session = next(get_db())
-    print(request.files.items())
     file_name, byted_file = list(request.files.items())[-1]
     if convert_bytes_to_mb(len(byted_file)) > 2.0:
         return Response(
@@ -126,12 +124,6 @@ def handle_unsupported_methods(request: Request):
     else:
         return Response(status_code=404, description="Not Found", headers={})
     return request
-
-
-@app.exception
-async def validation_exception_handler(exc: ValidationError):
-    print(exc)
-    return {"fsdfsdf": "asdfsdfsdf"}
 
 
 if __name__ == "__main__":
