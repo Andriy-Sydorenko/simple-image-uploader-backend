@@ -1,20 +1,26 @@
 from functools import wraps
 
-from robyn import Request, Response
+from robyn import Response
 
-from api.utils import decode_jwt_token
+from api.utils import extract_jwt_token_from_request, is_blacklisted
 
 
-def jwt_required(f):
-    @wraps(f)
-    def decorated_function(request: Request, *args, **kwargs):
-        token = request.headers.get("Authorization")
+def jwt_required(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        token = extract_jwt_token_from_request(request.headers)
         if not token:
-            return Response(status_code=401, description="Token is missing", headers={})
-        try:
-            decode_jwt_token(token)
-        except Exception as e:
-            return Response(status_code=401, description=str(e), headers={})
-        return f(request, *args, **kwargs)
+            return Response(
+                status_code=401,
+                description="Token is required",
+                headers={},
+            )
+        if is_blacklisted(token):
+            return Response(
+                status_code=401,
+                description="Token is blacklisted",
+                headers={},
+            )
+        return func(request, *args, **kwargs)
 
-    return decorated_function
+    return wrapper

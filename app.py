@@ -8,10 +8,12 @@ from sqlalchemy.orm import Session
 import config
 from api.crud.user import create_user, get_user_by_token
 from api.models import Image, User
+from api.models.backlisted_token import BlackListedToken
 from api.schemas.user import UserLogin, UserRegister
 from api.utils import extract_jwt_token_from_request, generate_jwt_token
+from decorators import jwt_required
 from engine import get_db
-from exceptions import UserAlreadyExistsError
+from exceptions import UserAlreadyExistsError, ValidationError
 from utils import ALLOWED_METHODS, convert_bytes_to_mb
 
 app = Robyn(__file__)
@@ -58,18 +60,45 @@ def login(request):
     return Response(status_code=401, description="Invalid credentials", headers={})
 
 
+@app.post("/logout/")
+@jwt_required
+def logout(request):
+    token = extract_jwt_token_from_request(request.headers)
+    db: Session = next(get_db())
+    blacklisted_token = BlackListedToken(token=token)
+    db.add(blacklisted_token)
+    db.commit()
+    return Response(
+        status_code=200,
+        description="Logged out successfully",
+        headers={},
+    )
+
+
 @app.post("/upload/")
 def upload_image(request):
-    token = extract_jwt_token_from_request(request.headers)
-    user = get_user_by_token(token)
-    db: Session = next(get_db())
-    file_name, byted_file = list(request.files.items())[-1]
+    try:
+        file_name, byted_file = list(request.files.items())[-1]
+    except IndexError:
+        return Response(
+            status_code=400,
+            description="No file provided",
+            headers={},
+        )
+
     if convert_bytes_to_mb(len(byted_file)) > 2.0:
         return Response(
             status_code=400,
             description="File size exceeds 2 MB limit",
             headers={},
         )
+
+    token = extract_jwt_token_from_request(request.headers)
+    try:
+        user = get_user_by_token(token)
+    except ValidationError as exc:
+        return Response(status_code=400, description=str(exc), headers={})
+    db: Session = next(get_db())
     result = cloudinary.uploader.upload(byted_file)
     image_url = result["secure_url"]
     file_size = convert_bytes_to_mb(result["bytes"])
@@ -106,6 +135,33 @@ def preview_image(request):
         "filename": image.filename,
         "file_size": image.file_size,
         "upload_time": image.upload_time.isoformat(),
+    }
+
+
+@app.get("/images/")
+@jwt_required
+def list_images(request):
+    db: Session = next(get_db())
+    token = extract_jwt_token_from_request(request.headers)
+    try:
+        user = get_user_by_token(token)
+    except ValidationError as exc:
+        return Response(status_code=400, description=str(exc), headers={})
+
+    query = select(Image).filter(Image.user_id == user.id)
+    result = db.execute(query)
+    images = result.scalars().all()
+    return {
+        "images": [
+            {
+                "image_uuid": image.uuid,
+                "image_url": image.url,
+                "filename": image.filename,
+                "file_size": image.file_size,
+                "upload_time": image.upload_time.isoformat(),
+            }
+            for image in images
+        ]
     }
 
 

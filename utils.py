@@ -26,6 +26,9 @@ ALLOWED_METHODS = {
     "/": ["GET"],
     "/upload/": ["POST"],
     "/image-preview/": ["GET"],
+    "/images/": ["GET"],
     "/register/": ["POST"],
     "/login/": ["POST"],
+    "/logout/": ["POST"],
+    "/docs": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
 }

@@ -1,6 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
+import jwt
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -8,7 +9,7 @@ from api.models import User
 from api.schemas.user import UserRegister
 from api.utils import decode_jwt_token
 from engine import get_db
-from exceptions import UserAlreadyExistsError
+from exceptions import UserAlreadyExistsError, ValidationError
 
 
 def create_user(user_data: UserRegister) -> User:
@@ -30,7 +31,10 @@ def create_user(user_data: UserRegister) -> User:
 def get_user_by_token(token: str) -> Optional[User]:
     if not token:
         return None
-    payload = decode_jwt_token(token)
+    try:
+        payload = decode_jwt_token(token)
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as exc:
+        raise ValidationError(str(exc))
     user_uuid = payload["user_uuid"]
     try:
         user_uuid = UUID(user_uuid)

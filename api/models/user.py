@@ -14,7 +14,7 @@ class User(Base):
 
     email = Column(String(64), nullable=False, unique=True)
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False, index=True)
-    hashed_password = Column(String(50), nullable=False)
+    hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
 
     images = relationship("Image", back_populates="user")
