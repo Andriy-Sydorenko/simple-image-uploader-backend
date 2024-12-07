@@ -12,6 +12,4 @@ CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 JWT_SECRET_KEY = generate_jwt_secret_key()
 
 DEPLOY = os.getenv("DEPLOY", False)
-print(DEPLOY)
 DATABASE_URL = os.getenv("PROD_INTERNAL_DB_URL", "") if DEPLOY else os.getenv("PROD_EXTERNAL_DB_URL", "")
-print(DATABASE_URL)
