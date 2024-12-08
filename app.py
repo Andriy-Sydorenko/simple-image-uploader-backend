@@ -1,7 +1,9 @@
+import json
 from uuid import UUID
 
 import cloudinary.uploader
-from robyn import Request, Response, Robyn
+from robyn import OpenAPI, Request, Response, Robyn
+from robyn.openapi import Components, License, OpenAPIInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -16,12 +18,128 @@ from engine import get_db
 from exceptions import UserAlreadyExistsError, ValidationError
 from utils import ALLOWED_METHODS, convert_bytes_to_mb
 
-app = Robyn(__file__)
+app = Robyn(
+    file_object=__file__,
+    openapi=OpenAPI(
+        info=OpenAPIInfo(
+            title="Image Uploader API",
+            description="This is a documentation to a image uploader API.",
+            version="1.1.0",
+            license=License(
+                name="BSD2.0",
+                url="https://opensource.org/license/bsd-2-clause",
+            ),
+            components=Components(),
+        ),
+    ),
+)
 cloudinary.config(
     cloud_name=config.CLOUDINARY_CLOUD_NAME,
     api_key=config.CLOUDINARY_API_KEY,
     api_secret=config.CLOUDINARY_API_SECRET,
 )
+
+
+openapi_schema = {
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Robyn API",
+        "version": "1.1.0",
+        "description": "This is the API documentation for the Robyn project.",
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "summary": "Index",
+                "description": "Returns Hello World!",
+                "responses": {"200": {"description": "Hello World!"}},
+            }
+        },
+        "/register/": {
+            "post": {
+                "summary": "Register",
+                "description": "Register a new user",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {"email": {"type": "string"}, "password": {"type": "string"}},
+                                "required": ["email", "password"],
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {"description": "User created successfully"},
+                    "400": {"description": "User already exists"},
+                },
+            }
+        },
+        "/login/": {
+            "post": {
+                "summary": "Login",
+                "description": "Authenticate a user",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {"email": {"type": "string"}, "password": {"type": "string"}},
+                                "required": ["email", "password"],
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {"description": "Authentication successful"},
+                    "401": {"description": "Invalid credentials"},
+                },
+            }
+        },
+        "/logout/": {
+            "post": {
+                "summary": "Logout",
+                "description": "Logout a user",
+                "responses": {"200": {"description": "Logged out successfully"}},
+            }
+        },
+        "/upload/": {
+            "post": {
+                "summary": "Upload Image",
+                "description": "Upload an image file",
+                "responses": {
+                    "200": {"description": "Image uploaded successfully"},
+                    "400": {"description": "File size exceeds limit or no file provided"},
+                },
+            }
+        },
+        "/image-preview/{image_uuid}": {
+            "get": {
+                "summary": "Preview Image",
+                "description": "Get image details by UUID",
+                "parameters": [{"name": "image_uuid", "in": "path", "required": True, "schema": {"type": "string"}}],
+                "responses": {"200": {"description": "Image details"}, "400": {"description": "Image not found"}},
+            }
+        },
+        "/images/": {
+            "get": {
+                "summary": "List Images",
+                "description": "List all images for a user",
+                "responses": {"200": {"description": "List of images"}, "400": {"description": "Validation error"}},
+            }
+        },
+    },
+}
+
+
+@app.get("/openapi.json")
+def openapi_json():
+    return Response(
+        status_code=200,
+        headers={"Content-Type": "application/json"},
+        description=json.dumps(openapi_schema),
+    )
 
 
 @app.get("/")

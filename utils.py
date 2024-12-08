@@ -31,4 +31,5 @@ ALLOWED_METHODS = {
     "/login/": ["POST"],
     "/logout/": ["POST"],
     "/docs": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    "/openapi.json": ["GET"],
 }
