@@ -149,7 +149,10 @@ def index():
 
 @app.post("/register/")
 def register(request):
-    user_data = UserRegister(**request.json())
+    try:
+        user_data = UserRegister(**request.json())
+    except ValueError:
+        return Response(status_code=400, description="Incorrect credentials provided", headers={})
     try:
         create_user(user_data)
     except UserAlreadyExistsError as exc:
@@ -163,7 +166,10 @@ def register(request):
 
 @app.post("/login/")
 def login(request):
-    login_data = UserLogin(**request.json())
+    try:
+        login_data = UserLogin(**request.json())
+    except ValueError:
+        return Response(status_code=400, description="Incorrect credentials provided", headers={})
     db: Session = next(get_db())
     query = select(User).filter(User.email == login_data.email)
     result = db.execute(query)
