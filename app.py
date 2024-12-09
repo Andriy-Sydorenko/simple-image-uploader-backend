@@ -24,7 +24,7 @@ app = Robyn(
         info=OpenAPIInfo(
             title="Image Uploader API",
             description="This is a documentation to a image uploader API.",
-            version="1.1.0",
+            version="1.0.0",
             license=License(
                 name="BSD2.0",
                 url="https://opensource.org/license/bsd-2-clause",
@@ -40,6 +40,7 @@ cloudinary.config(
 )
 
 
+# TODO: MOCK ALL THE DOCS RESPONSES, PROVIDE NEEDED REQUEST BODY AND REQUEST RESPONSE
 openapi_schema = {
     "openapi": "3.0.0",
     "info": {
@@ -157,11 +158,7 @@ def register(request):
         create_user(user_data)
     except UserAlreadyExistsError as exc:
         return Response(status_code=400, description=str(exc), headers={})
-    return Response(
-        status_code=201,
-        description="User created successfully",
-        headers={},
-    )
+    return {"message": "User created successfully"}
 
 
 @app.post("/login/")
