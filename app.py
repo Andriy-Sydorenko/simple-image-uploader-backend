@@ -303,5 +303,13 @@ def handle_unsupported_methods(request: Request):
     return request
 
 
+@app.before_request()
+async def cors_handler(request: Request):
+    origin = request.headers.get("host")
+    if origin not in config.ALLOWED_ORIGINS:
+        return Response(status_code=403, description="Forbidden", headers={})
+    return request
+
+
 if __name__ == "__main__":
     app.start(host="0.0.0.0", port=8080)
