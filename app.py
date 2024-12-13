@@ -40,7 +40,6 @@ cloudinary.config(
 )
 
 
-# TODO: MOCK ALL THE DOCS RESPONSES, PROVIDE NEEDED REQUEST BODY AND REQUEST RESPONSE
 openapi_schema = {
     "openapi": "3.0.0",
     "info": {
@@ -304,8 +303,13 @@ def handle_unsupported_methods(request: Request):
 
 
 @app.before_request()
-async def cors_handler(request: Request):
-    origin = request.headers.get("host")
+def cors_handler(request: Request):
+    try:
+        origin = request.headers["referer"]
+    except KeyError:
+        return Response(status_code=403, description="Referer header not found in request, access denied", headers={})
+    if config.ALLOWED_ORIGINS == "*":
+        return request
     if origin not in config.ALLOWED_ORIGINS:
         return Response(status_code=403, description="Forbidden", headers={})
     return request
