@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 import cloudinary.uploader
-from robyn import OpenAPI, Request, Response, Robyn
+from robyn import ALLOW_CORS, OpenAPI, Request, Response, Robyn
 from robyn.openapi import Components, License, OpenAPIInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -33,6 +33,7 @@ app = Robyn(
         ),
     ),
 )
+ALLOW_CORS(app, origins="*")
 cloudinary.config(
     cloud_name=config.CLOUDINARY_CLOUD_NAME,
     api_key=config.CLOUDINARY_API_KEY,
@@ -299,19 +300,6 @@ def handle_unsupported_methods(request: Request):
             break
     else:
         return Response(status_code=404, description="Not Found", headers={})
-    return request
-
-
-@app.before_request()
-def cors_handler(request: Request):
-    try:
-        origin = request.headers["referer"]
-    except KeyError:
-        return Response(status_code=403, description="Referer header not found in request, access denied", headers={})
-    if config.ALLOWED_ORIGINS == "*":
-        return request
-    if origin not in config.ALLOWED_ORIGINS:
-        return Response(status_code=403, description="Forbidden", headers={})
     return request
 
 
