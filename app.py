@@ -76,7 +76,7 @@ def login(request):
             "user_uuid": user.uuid,
             "token": token,
         }
-    return Response(status_code=401, description="Invalid credentials", headers={})
+    return Response(status_code=400, description="Invalid credentials", headers={})
 
 
 @app.post("/logout/")
