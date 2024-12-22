@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import json
 import os
 
 
@@ -20,6 +21,41 @@ def convert_bytes_to_mb(file_size):
     https://stackoverflow.com/questions/2365100/converting-bytes-to-megabytes
     """
     return float(file_size / (1000**2))
+
+
+class EnvParser:
+    @staticmethod
+    def str(env_var: str, default: str = "") -> str:
+        return os.getenv(env_var, default)
+
+    @staticmethod
+    def int(env_var: str, default: int = 0) -> int:
+        try:
+            return int(os.getenv(env_var, default))
+        except ValueError:
+            raise ValueError(f"Invalid value for {env_var}")
+
+    @staticmethod
+    def bool(env_var: str, default: bool = False) -> bool:
+        value = os.getenv(env_var, str(default)).lower()
+        if value in {"true", "1", "yes"}:
+            return True
+        elif value in {"false", "0", "no"}:
+            return False
+        else:
+            raise ValueError(f"Invalid value for {env_var}")
+
+    @staticmethod
+    def list(env_var: str, default=None) -> list:
+        if default is None:
+            default = []
+        value = os.getenv(env_var, default)
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return default
+        return default
 
 
 ALLOWED_METHODS = {
