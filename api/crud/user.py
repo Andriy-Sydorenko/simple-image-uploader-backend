@@ -7,13 +7,11 @@ from sqlalchemy.orm import Session
 
 from api.models import User
 from api.schemas.user import UserRegister
-from api.utils import decode_jwt_token
-from engine import get_db
+from api.utils import decode_jwt
 from exceptions import UserAlreadyExistsError, ValidationError
 
 
-def create_user(user_data: UserRegister) -> User:
-    db: Session = next(get_db())
+def create_user(user_data: UserRegister, db: Session) -> User:
     query = select(User).filter(User.email == user_data.email)
     result = db.execute(query)
     existing_user = result.scalars().first()
@@ -28,20 +26,24 @@ def create_user(user_data: UserRegister) -> User:
     return user
 
 
-def get_user_by_token(token: str) -> Optional[User]:
+def get_user_by_token(token: str, db: Session) -> Optional[User]:
     if not token:
         return None
     try:
-        payload = decode_jwt_token(token)
+        user_uuid = decode_jwt(token)
+        user_uuid = UUID(user_uuid)
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError) as exc:
         raise ValidationError(str(exc))
-    user_uuid = payload["user_uuid"]
-    try:
-        user_uuid = UUID(user_uuid)
     except ValueError:
         return None
-    db: Session = next(get_db())
     query = select(User).filter(User.uuid == user_uuid)
+    result = db.execute(query)
+    user = result.scalars().first()
+    return user
+
+
+def get_user_by_email(email: str, db: Session) -> Optional[User]:
+    query = select(User).filter(User.email == email)
     result = db.execute(query)
     user = result.scalars().first()
     return user
