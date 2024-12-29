@@ -20,7 +20,7 @@ import config
 from api.crud.image import create_image, get_image_by_uuid, get_images_by_user_id
 from api.crud.token import add_token_to_blacklisted
 from api.crud.user import create_user, get_user_by_email, get_user_by_token
-from api.schemas.image import ImageUploadResponseSchema
+from api.schemas.image import ImageListResponseSchema, ImageResponseSchema
 from api.schemas.user import UserLogin, UserRegister
 from api.utils import extract_jwt_token_from_request, generate_jwt_token
 from decorators import jwt_required
@@ -108,7 +108,7 @@ def upload_image(request: Request, file: Optional[UploadFile] = File(None), db: 
     image_url = result["secure_url"]
     image = create_image(file.filename, file_size, image_url, user, db)
 
-    return ImageUploadResponseSchema(
+    return ImageResponseSchema(
         image_uuid=image.uuid,
         image_url=image.url,
         filename=image.filename,
@@ -134,7 +134,7 @@ def preview_image(request: Request, db: Session = Depends(get_db)):
     }
 
 
-@app.get("/images/")
+@app.get("/images/", response_model=ImageListResponseSchema)
 @jwt_required
 def list_images(request: Request, db: Session = Depends(get_db)):
     token = extract_jwt_token_from_request(request.headers)
@@ -144,15 +144,16 @@ def list_images(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(exc))
 
     images = get_images_by_user_id(user.id, db)
-    return {
-        "images": [
-            {
-                "image_uuid": image.uuid,
-                "image_url": image.url,
-                "filename": image.filename,
-                "file_size": image.file_size,
-                "upload_time": image.upload_time.isoformat(),
-            }
+
+    return ImageListResponseSchema(
+        images=[
+            ImageResponseSchema(
+                image_uuid=image.uuid,
+                image_url=image.url,
+                filename=image.filename,
+                file_size=image.file_size,
+                upload_time=image.upload_time.isoformat(),
+            )
             for image in images
         ]
-    }
+    )
