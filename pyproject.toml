@@ -7,7 +7,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-robyn = "^0.64.1"
 black = "^24.10.0"
 isort = "^5.13.2"
 flake8 = "^7.1.1"
@@ -20,6 +19,7 @@ pydantic = {extras = ["email"], version = "^2.10.1"}
 bcrypt = "^4.2.1"
 pyjwt = "^2.10.0"
 psycopg2-binary = "^2.9.10"
+fastapi = {extras = ["all"], version = "^0.115.6"}
 
 [tool.black]
 line-length = 119
