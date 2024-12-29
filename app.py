@@ -46,8 +46,8 @@ cloudinary.config(
 
 
 @app.get("/")
-def index():
-    return "Hello World!"
+def health_check():
+    return {"message": "API is running!"}
 
 
 @app.post("/register/")
